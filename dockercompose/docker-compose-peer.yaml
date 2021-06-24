@@ -1,0 +1,211 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+volumes:
+  peer0.centralbank.islab.re.kr:
+  peer0.commercialbank.islab.re.kr:
+  peer1.commercialbank.islab.re.kr:
+  peer0.consumer.islab.re.kr:
+  peer1.consumer.islab.re.kr:
+  peer2.consumer.islab.re.kr:
+
+
+networks:
+  islab.re.kr:
+
+services:
+  peer0.centralbank.islab.re.kr:
+    container_name: peer0.centralbank.islab.re.kr
+    image: hyperledger/fabric-peer:$IMAGE_TAG
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=dockercompose_islab.re.kr
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.centralbank.islab.re.kr
+      - CORE_PEER_ADDRESS=peer0.centralbank.islab.re.kr:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.centralbank.islab.re.kr:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.centralbank.islab.re.kr:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.centralbank.islab.re.kr:7051
+      - CORE_PEER_LOCALMSPID=centralbankOrg
+    volumes:
+        - /var/run/docker.sock:/host/var/run/docker.sock
+        - ../build/artifacts/crypto-config/peerOrganizations/centralbank.islab.re.kr/peers/peer0.centralbank.islab.re.kr/msp:/etc/hyperledger/fabric/msp
+        - ../build/artifacts/crypto-config/peerOrganizations/centralbank.islab.re.kr/peers/peer0.centralbank.islab.re.kr/tls:/etc/hyperledger/fabric/tls
+        - peer0.centralbank.islab.re.kr:/var/hyperledger/production
+    working_dir: /etc/hyperledger/fabric
+    command: peer node start
+    ports:
+      - 7051:7051
+    networks:
+      - islab.re.kr
+
+  peer0.commercialbank.islab.re.kr:
+    container_name: peer0.commercialbank.islab.re.kr
+    image: hyperledger/fabric-peer:$IMAGE_TAG
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=dockercompose_islab.re.kr
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.commercialbank.islab.re.kr
+      - CORE_PEER_ADDRESS=peer0.commercialbank.islab.re.kr:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.commercialbank.islab.re.kr:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.commercialbank.islab.re.kr:7051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.commercialbank.islab.re.kr:7051
+      - CORE_PEER_LOCALMSPID=commercialbankOrg
+    volumes:
+        - /var/run/docker.sock:/host/var/run/docker.sock
+        - ../build/artifacts/crypto-config/peerOrganizations/commercialbank.islab.re.kr/peers/peer0.commercialbank.islab.re.kr/msp:/etc/hyperledger/fabric/msp
+        - ../build/artifacts/crypto-config/peerOrganizations/commercialbank.islab.re.kr/peers/peer0.commercialbank.islab.re.kr/tls:/etc/hyperledger/fabric/tls
+        - peer0.commercialbank.islab.re.kr:/var/hyperledger/production
+    working_dir: /etc/hyperledger/fabric
+    command: peer node start
+    ports:
+      - 8051:7051
+    networks:
+      - islab.re.kr
+
+  peer1.commercialbank.islab.re.kr:
+    container_name: peer1.commercialbank.islab.re.kr
+    image: hyperledger/fabric-peer:$IMAGE_TAG
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=dockercompose_islab.re.kr
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer1.commercialbank.islab.re.kr
+      - CORE_PEER_ADDRESS=peer1.commercialbank.islab.re.kr:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer1.commercialbank.islab.re.kr:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.commercialbank.islab.re.kr:7051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.commercialbank.islab.re.kr:7051
+      - CORE_PEER_LOCALMSPID=commercialbankOrg
+    volumes:
+        - /var/run/docker.sock:/host/var/run/docker.sock
+        - ../build/artifacts/crypto-config/peerOrganizations/commercialbank.islab.re.kr/peers/peer1.commercialbank.islab.re.kr/msp:/etc/hyperledger/fabric/msp
+        - ../build/artifacts/crypto-config/peerOrganizations/commercialbank.islab.re.kr/peers/peer1.commercialbank.islab.re.kr/tls:/etc/hyperledger/fabric/tls
+        - peer1.commercialbank.islab.re.kr:/var/hyperledger/production
+    working_dir: /etc/hyperledger/fabric
+    command: peer node start
+    ports:
+      - 8052:7051
+    networks:
+      - islab.re.kr
+
+  peer0.consumer.islab.re.kr:
+    container_name: peer0.consumer.islab.re.kr
+    image: hyperledger/fabric-peer:$IMAGE_TAG
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=dockercompose_islab.re.kr
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.consumer.islab.re.kr
+      - CORE_PEER_ADDRESS=peer0.consumer.islab.re.kr:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.consumer.islab.re.kr:7502
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.consumer.islab.re.kr:7051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.consumer.islab.re.kr:7051
+      - CORE_PEER_LOCALMSPID=consumerOrg
+    volumes:
+        - /var/run/docker.sock:/host/var/run/docker.sock
+        - ../build/artifacts/crypto-config/peerOrganizations/consumer.islab.re.kr/peers/peer0.consumer.islab.re.kr/msp:/etc/hyperledger/fabric/msp
+        - ../build/artifacts/crypto-config/peerOrganizations/consumer.islab.re.kr/peers/peer0.consumer.islab.re.kr/tls:/etc/hyperledger/fabric/tls
+        - peer0.consumer.islab.re.kr:/var/hyperledger/production
+    working_dir: /etc/hyperledger/fabric
+    command: peer node start
+    ports:
+      - 9051:7051
+    networks:
+      - islab.re.kr
+
+  peer1.consumer.islab.re.kr:
+    container_name: peer1.consumer.islab.re.kr
+    image: hyperledger/fabric-peer:$IMAGE_TAG
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=dockercompose_islab.re.kr
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer1.consumer.islab.re.kr
+      - CORE_PEER_ADDRESS=peer1.consumer.islab.re.kr:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer1.consumer.islab.re.kr:7502
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.consumer.islab.re.kr:7051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.consumer.islab.re.kr:7051
+      - CORE_PEER_LOCALMSPID=consumerOrg
+    volumes:
+        - /var/run/docker.sock:/host/var/run/docker.sock
+        - ../build/artifacts/crypto-config/peerOrganizations/consumer.islab.re.kr/peers/peer1.consumer.islab.re.kr/msp:/etc/hyperledger/fabric/msp
+        - ../build/artifacts/crypto-config/peerOrganizations/consumer.islab.re.kr/peers/peer1.consumer.islab.re.kr/tls:/etc/hyperledger/fabric/tls
+        - peer1.consumer.islab.re.kr:/var/hyperledger/production
+    working_dir: /etc/hyperledger/fabric
+    command: peer node start
+    ports:
+      - 9052:7051
+    networks:
+      - islab.re.kr
+
+  peer2.consumer.islab.re.kr:
+    container_name: peer2.consumer.islab.re.kr
+    image: hyperledger/fabric-peer:$IMAGE_TAG
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=dockercompose_islab.re.kr
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer2.consumer.islab.re.kr
+      - CORE_PEER_ADDRESS=peer2.consumer.islab.re.kr:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer2.consumer.islab.re.kr:7502
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.consumer.islab.re.kr:7051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer2.consumer.islab.re.kr:7051
+      - CORE_PEER_LOCALMSPID=consumerOrg
+    volumes:
+        - /var/run/docker.sock:/host/var/run/docker.sock
+        - ../build/artifacts/crypto-config/peerOrganizations/consumer.islab.re.kr/peers/peer2.consumer.islab.re.kr/msp:/etc/hyperledger/fabric/msp
+        - ../build/artifacts/crypto-config/peerOrganizations/consumer.islab.re.kr/peers/peer2.consumer.islab.re.kr/tls:/etc/hyperledger/fabric/tls
+        - peer2.consumer.islab.re.kr:/var/hyperledger/production
+    working_dir: /etc/hyperledger/fabric
+    command: peer node start
+    ports:
+      - 9053:7051
+    networks:
+      - islab.re.kr

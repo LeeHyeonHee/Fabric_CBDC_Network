@@ -1,0 +1,47 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+networks:
+  islab.re.kr:
+
+services:
+  cli:
+      container_name: cli
+      image: hyperledger/fabric-tools:$IMAGE_TAG
+      tty: true
+      stdin_open: true
+      environment:
+        - GOPATH=/opt/gopath
+        - FABRIC_LOGGING_SPEC=INFO
+        - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+        - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=dockercompose_islab.re.kr
+        - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+        - CORE_PEER_TLS_ENABLED=true
+        - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+        - CORE_PEER_TLS_CERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/centralbank.islab.re.kr/peers/peer0.centralbank.islab.re.kr/tls/server.crt
+        - CORE_PEER_TLS_KEY_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/centralbank.islab.re.kr/peers/peer0.centralbank.islab.re.kr/tls/server.key
+        - CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/centralbank.islab.re.kr/peers/peer0.centralbank.islab.re.kr/tls/ca.crt
+      working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+      command: peer node start
+      volumes:
+          - /var/run/:/host/var/run/
+          - ../build/artifacts/crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations
+          - ../build/artifacts/tx:/opt/gopath/src/github.com/hyperledger/fabric/peer/tx
+          - ../build/artifacts/block:/opt/gopath/src/github.com/hyperledger/fabric/peer/block
+          - ../chaincode-go:/opt/gopath/src/github.com/asset-transfer-basic/chaincode-go
+          - ../chaincode-user:/opt/gopath/src/github.com/asset-transfer-basic/chaincode-user
+          - ../chaincode-regulatory:/opt/gopath/src/github.com/asset-transfer-basic/chaincode-regulatory
+          - ../atcc://opt/gopath/src/github.com/mychaincode
+      depends_on:
+        - peer0.centralbank.islab.re.kr
+        - peer0.commercialbank.islab.re.kr
+        - peer1.commercialbank.islab.re.kr
+        - peer0.consumer.islab.re.kr
+        - peer1.consumer.islab.re.kr
+        - peer2.consumer.islab.re.kr
+      networks:
+        - islab.re.kr
