@@ -1,0 +1,42 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+OrdererOrgs:
+  - Name: Orderer
+    Domain: islab.re.kr
+    EnableNodeOUs: true
+    Template:
+      Count: 3
+      SANS:
+        - localhost
+
+PeerOrgs:
+  - Name: centralbank
+    Domain: centralbank.islab.re.kr
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+      SANS:
+        - localhost
+    Users:
+      Count: 1
+  - Name: commercialbank
+    Domain: commercialbank.islab.re.kr
+    EnableNodeOUs: true
+    Template:
+      Count: 2
+      SANS:
+        - localhost
+    Users:
+      Count: 1
+  - Name: consumer
+    Domain: consumer.islab.re.kr
+    EnableNodeOUs: true
+    Template:
+      Count: 3
+      SANS:
+        - localhost
+    Users:
+      Count: 1
