@@ -3,10 +3,13 @@ package chaincode
 import (
 	"encoding/json"
 	"fmt"
-
+	"time"
+	"strconv"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
+// "time"
+// "strconv"
 
 // SmartContract provides functions for managing an Asset
 type RegulatoryContract struct {
@@ -23,15 +26,16 @@ type Account struct {
 type usageHistory struct {
 	ID 			   string `json:"ID"`
 	Receiver 	   string `json:"receiver"`
-	Price		   int 	  `json:"price"`
+	Price		   string `json:"price"`
 	Date		   string `json:"date"`
+	Sender 		   string `json:"sender"`
 }
 
-func (s *RegulatoryContract) InitBalance(ctx contractapi.TransactionContextInterface) error {
+func (s *RegulatoryContract) InitAccount(ctx contractapi.TransactionContextInterface) error {
 
 	accounts := []Account{
-		{ID: "0", Name: "Shinhan-Main", Balane: 0},
-		{ID: "1", Name: "Shinhan-Sub", Balane: 0},
+		{ID: "Bank0", Name: "Shinhan-Main", Balance: 0},
+		{ID: "Bank1", Name: "Shinhan-Sub", Balance: 0},
 	}
 
 	for _, account := range accounts {
@@ -49,93 +53,243 @@ func (s *RegulatoryContract) InitBalance(ctx contractapi.TransactionContextInter
 	return nil
 }
 
-// ReadAsset returns the asset stored in the world state with given id.
-func (s *AdminContract) ReadTotalBalance(ctx contractapi.TransactionContextInterface) (*totalBalance, error) {
-	id := CBDC_NAME
-	totalBalanceJSON, err := ctx.GetStub().GetState(id)
+func (s *RegulatoryContract) ReadAccount(ctx contractapi.TransactionContextInterface, id string) (*Account, error) {
+	accountJSON, err := ctx.GetStub().GetState(id)
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to read from world state: %v", err)
+		return nil, fmt.Errorf("failed to read world state: %v", err)
 	}
-	if totalBalanceJSON == nil {
+	if accountJSON == nil {
 		return nil, fmt.Errorf("the asset %s does not exist", id)
 	}
 
-	var totalBalance totalBalance
-	err = json.Unmarshal(totalBalanceJSON, &totalBalance)
+	var account Account
+	err = json.Unmarshal(accountJSON, &account)
+
 	if err != nil {
 		return nil, err
 	}
 
-	return &totalBalance, nil
+	return &account, nil
 }
 
-// UpdateAsset updates an existing asset in the world state with provided parameters.
-func (s *AdminContract) UpdateTotalBalance(ctx contractapi.TransactionContextInterface, newBalance int) error {
-	id := CBDC_NAME
-	bal, err := s.ReadTotalBalance(ctx)
+func (s *RegulatoryContract) UpdateAccount(ctx contractapi.TransactionContextInterface, id string, balance string) error {
+	account, err := s.ReadAccount(ctx, id)
 	if err != nil {
 		return err
 	}
-	// totalBalanceJSON, err := ctx.GetStub().GetState(id)
-	// if err != nil {
-	// 	return err
-	// }
-	// if totalBalanceJSON == nil {
-	// 	return fmt.Errorf("the asset %s does not exist")
-	// }
+	balNum, e := strconv.Atoi(balance)
+	if e != nil {
+		return e
+	}
+
+	if id != "Bank0" {
+		return fmt.Errorf("Only the head office of a bank can issue a CBDC from the central bank!!")
+	}
+
+	account.Balance = account.Balance + balNum
+	accountJSON, err := json.Marshal(account)
+	if err != nil {
+		return err
+	}
+	s.TransferHistory(ctx, "Central Bank", id, balance)
+	return ctx.GetStub().PutState(id, accountJSON)
+}
+
+func (s *RegulatoryContract) UpdateAccountUser(ctx contractapi.TransactionContextInterface, id string, userID string, balance string) error {
+	account, err := s.ReadAccount(ctx, id)
+	if err != nil {
+		return err
+	}
+	balNum, e := strconv.Atoi(balance)
+	if e != nil {
+		return e
+	}
+
+	account.Balance = account.Balance + balNum
+	accountJSON, err := json.Marshal(account)
+	if err != nil {
+		return err
+	}
+	// s.TransferHistory(ctx, userID, id, balance)
+	return ctx.GetStub().PutState(id, accountJSON)
+}
+
+func (s *RegulatoryContract) UpdateSendBalance(ctx contractapi.TransactionContextInterface, id string, rec string, balance string) error {
+	account, err := s.ReadAccount(ctx, id)
+	if err != nil {
+		return err
+	}
+	balNum, e := strconv.Atoi(balance)
+	if e != nil {
+		return e
+	}
+
+	change := account.Balance - balNum
 	
-	// var change totalBalance 
-	// error := json.Unmarshal(totalBalanceJSON, &change)
-	// if error != nil {
-	// 	return error
-	// }
-    
-	// if change.Balance + balance > MAX_VAL {
-	// 	return fmt.Errorf("MAX VAL")
-	// }
-    newBal := bal.Balance + newBalance
-
-	if newBal > MAX_VAL {
-		return fmt.Errorf("MAX VAL")
+	if change < 0 {
+		return fmt.Errorf("Lack of Balance")
 	}
-	bal.Balance = newBal
 
-	// overwriting original asset with new asset
-	// totalBalanceA := totalBalance{
-	// 	ID:             id,
-	// 	Balance:        newBal,
-	// }
-    fmt.Println(bal.Balance)
-	totalBalanceJSON, err := json.Marshal(bal)
-    fmt.Println(bal.Balance)
+	account.Balance = change
+	
+	// accountJSON, err := json.Marshal(account)
 	if err != nil {
 		return err
 	}
-    fmt.Println(bal.Balance)
-	return ctx.GetStub().PutState(id, totalBalanceJSON)
+
+	params := []string{"UpdateAccount", id, rec, balance}
+	queryArgs := make([][]byte, len(params))
+
+	for i, arg := range params {
+		queryArgs[i] = []byte(arg)
+	}
+
+	response := ctx.GetStub().InvokeChaincode("userchaincode", queryArgs, "user-channel")
+	if response.Status != 200 {
+		return fmt.Errorf("Failed to query chaincode. Got Error: %s", response.Payload)
+	}
+
+	s.TransferHistory(ctx, id, rec, balance)
+	accountJSON, err := json.Marshal(account)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(id, accountJSON)
 }
 
-func (s *AdminContract) ReadTotalBalanceAll(ctx contractapi.TransactionContextInterface) ([]*totalBalance, error) {
-	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+func (s *RegulatoryContract) UpdateUserBalance(ctx contractapi.TransactionContextInterface, id string, rec string, balance string) error {
+	account, err := s.ReadAccount(ctx, id)
+	if err != nil {
+		return err
+	}
+	balNum, e := strconv.Atoi(balance)
+	if e != nil {
+		return e
+	}
+
+	change := account.Balance - balNum
+	
+	if change < 0 {
+		return fmt.Errorf("Lack of Balance")
+	}
+
+	account.Balance = change
+	
+	// accountJSON, err := json.Marshal(account)
+	if err != nil {
+		return err
+	}
+
+	params := []string{"UpdateAccount", id, rec, balance}
+	queryArgs := make([][]byte, len(params))
+
+	for i, arg := range params {
+		queryArgs[i] = []byte(arg)
+	}
+
+	response := ctx.GetStub().InvokeChaincode("userchaincode", queryArgs, "user-channel")
+	if response.Status != 200 {
+		return fmt.Errorf("Failed to query chaincode. Got Error: %s", response.Payload)
+	}
+
+	accountJSON, err := json.Marshal(account)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(id, accountJSON)
+}
+
+func (s *RegulatoryContract) AccountExist(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
+	accountJSON, err := ctx.GetStub().GetState(id)
+	if err != nil {
+		return false, fmt.Errorf("failed to read from world state: %v", err)
+	}
+
+	return accountJSON != nil, nil
+}
+
+
+func (s *RegulatoryContract) ReadTransferHistory(ctx contractapi.TransactionContextInterface) ([]*usageHistory, error) {
+	historyJSON, err := ctx.GetStub().GetStateByRange("0", "999")
 	if err != nil {
 		return nil, err
 	}
-	defer resultsIterator.Close()
-
-	var balances []*totalBalance
-	for resultsIterator.HasNext() {
-		queryResponse, err := resultsIterator.Next()
+	defer historyJSON.Close()
+	var historys []*usageHistory
+	for historyJSON.HasNext() {
+		queryResponse, err := historyJSON.Next()
+		
 		if err != nil {
 			return nil, err
 		}
-
-		var balance totalBalance
-		err = json.Unmarshal(queryResponse.Value, &balance)
+		var history usageHistory
+		err = json.Unmarshal(queryResponse.Value, &history)
 		if err != nil {
-			return nil, err
+			return nil, err 
 		}
-		balances = append(balances, &balance)
+		historys = append(historys, &history)
+	}
+	return historys, nil
+}
+
+func (s *RegulatoryContract) TransferHistory(ctx contractapi.TransactionContextInterface, rec string, sen string, price string) error {
+	history, err := s.ReadTransferHistory(ctx)
+	if err != nil {
+		return err
+	}
+	id := strconv.Itoa((len(history)+1))
+	now := time.Now()
+	customTime := now.Format("2006-01-02 15:04")
+	his := usageHistory{
+		ID:			id,
+		Receiver:   rec,
+		Price:		price,
+		Date:		customTime,
+		Sender:		sen,
+	}
+	hisJSON, err := json.Marshal(his)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(id, hisJSON)
+}
+
+func (s *RegulatoryContract) TransferBalanceBank(ctx contractapi.TransactionContextInterface, id string, rec string, price string) error {
+	sender, err := s.ReadAccount(ctx, id)
+	if err != nil {
+		return err
+	}
+	receiver, err := s.ReadAccount(ctx, rec)
+	if err != nil {
+		return err
 	}
 
-	return balances, nil
+	priceNum, e := strconv.Atoi(price)
+	if e != nil {
+		return e
+	}
+
+	sBal := sender.Balance - priceNum
+	rBal := receiver.Balance + priceNum
+	if sBal < 0 {
+		return fmt.Errorf("Lack of balance %s's Account", id)
+	}
+
+	sender.Balance = sBal
+	receiver.Balance = rBal
+
+	senderJSON, sErr := json.Marshal(sender)
+	if sErr != nil {
+		return sErr
+	}
+	receiverJSON, rErr := json.Marshal(receiver)
+	if rErr != nil {
+		return rErr
+	}
+	ctx.GetStub().PutState(id, senderJSON)
+	ctx.GetStub().PutState(rec, receiverJSON)
+
+	s.TransferHistory(ctx, rec, id, price)
+	return nil
 }
